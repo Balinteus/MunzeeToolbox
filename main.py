@@ -9,6 +9,7 @@ arrow_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\
 qr_paths = []
 sign_path = ""
 export_location = ""
+total_session_gens = 0
 
 # Default Settings
 qr_size = 500
@@ -53,7 +54,6 @@ def generateSignature(qr_path, sign_path):
 
     return generated_img
 
-
 while True:
     event, values = mainWindow.read()
     if event == pgui.WIN_CLOSED or event == 'Cancel':
@@ -72,8 +72,12 @@ while True:
         export_location = pgui.popup_get_folder("Choose your output folder!")
         print(export_location)  # DEBUG
     elif event == "-generate-":
-        # TODO: Implement this shit
-        pass
+        generated_images = []
+        for i in range(len(qr_paths)):
+            generated_images.append(generateSignature(qr_paths[i], sign_path))
+        for i in range(len(generated_images)):
+            generated_images[i].save(f"{export_location}{'' if export_location.endswith('/') else '/'}gen_{total_session_gens}_{i}.png")
+        total_session_gens += 1  # This prevents regenerating the previously generated images
     readyCheck()
     print(event[0])
 
