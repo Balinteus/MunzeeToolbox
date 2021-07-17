@@ -13,13 +13,14 @@ qr_size = 500
 sign_size = 100
 output_size = 85
 
-# TODO: Create columns
-windowLayout = [ [pgui.Text("Balinteus' Munzee Signature Generator", size=[44, 1], font="Helvitica 20 bold", justification="center", relief=pgui.RELIEF_RIDGE)], 
-                [pgui.Frame("Imported QR Code", [[pgui.Image(empty_image, key="-qr_img-", size=(300, 300))]]),
-                 pgui.Image(arrow_image, size=(100, 100)),
-                 pgui.Frame("Generated QR Code", [[pgui.Image(empty_image, key="-rendered_img-", size=(300, 300))]])],
-                [pgui.Button("Import QR Code(s)", size=[38, 1]), pgui.Button("Export", size=[38, 1])],
-                [pgui.Button("Import Signiture Image", size=[38, 1]), pgui.Button("Batch Export", size=[38, 1], disabled=not_multi_input)] ]
+windowLayout = [ [pgui.Text("Balinteus' Munzee Signature Generator", size=[46, 1], font="Helvitica 20 bold", justification="center", relief=pgui.RELIEF_RIDGE)],
+                [pgui.Column([ [pgui.Frame("Imported QR Code", [[pgui.Image(empty_image, key="-qr_img-", size=(300, 300))]])],
+                             [pgui.Button("Import QR Code(s)", size=[38, 1])],
+                             [pgui.Button("Import Signature Image", size=[38, 1])] ]),
+                pgui.Column([ [pgui.Image(arrow_image, size=(100, 100))] ]),
+                pgui.Column([ [pgui.Frame("Generated QR Code", [[pgui.Image(empty_image, key="-rendered_img-", size=(300, 300))]])],
+                             [pgui.Button("Export", size=[38, 1])],
+                             [pgui.Button("Batch Export", size=[38, 1], disabled=not_multi_input)] ])] ]
 
 mainWindow = pgui.Window("Munzee Signature Generator", windowLayout)
 
