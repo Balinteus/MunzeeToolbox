@@ -68,14 +68,16 @@ def updateThumbnails():
         qr_image.thumbnail((300, 300))
         qr_thumbnail = io.BytesIO()
         qr_image.save(qr_thumbnail, format="PNG")
-        mainWindow.Element("-qr_img-").Update(filename=None, data=qr_thumbnail.getvalue())
+        mainWindow.Element("-qr_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
         # Update Rendered thumbnail
-        # TODO: Fix render order
-        rendered_image = generateSignature(qr_paths[0], sign_path).resize((300, 300), Image.BILINEAR)
-        rendered_image.thumbnail((300, 300))
-        rendered_thumbnail = io.BytesIO()
-        rendered_image.save(rendered_thumbnail, format="PNG")
-        mainWindow.Element("-rendered_img-").Update(filename=None, data=rendered_thumbnail.getvalue())
+        if (sign_path != "") and (sign_path != None):
+            rendered_image = generateSignature(qr_paths[0], sign_path).resize((300, 300), Image.BILINEAR)
+            rendered_image.thumbnail((300, 300))
+            rendered_thumbnail = io.BytesIO()
+            rendered_image.save(rendered_thumbnail, format="PNG")
+            mainWindow.Element("-rendered_img-").Update(filename=None, data=rendered_thumbnail.getvalue(), size=(300, 300))
+        else:
+            mainWindow.Element("-rendered_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
     else:
         mainWindow.Element("-qr_img-").Update(filename=empty_image, size=(300, 300))
         mainWindow.Element("-rendered_img-").Update(filename=empty_image, size=(300, 300))
