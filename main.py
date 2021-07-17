@@ -3,7 +3,8 @@ import PySimpleGUI as pgui
 
 pgui.theme("DarkAmber")
 
-empty_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\arrow.png"
+empty_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\empty.png"
+multiple_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\multiple.png"
 arrow_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\arrow.png"
 
 qr_paths = []
