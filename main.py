@@ -1,12 +1,22 @@
 import io
+import sys
 from PIL import Image, ImageDraw, ImageFilter
 import PySimpleGUI as pgui
 
 pgui.theme("DarkAmber")
 
-empty_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\empty.png"
-multiple_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\multiple.png"
-arrow_image = "C:\\Users\\balin\\Desktop\\Current Projects\\MunzeeSignatureGen\\img\\arrow.png"
+# Preparing the asset directory
+# https://stackoverflow.com/questions/31836104/pyinstaller-and-onefile-how-to-include-an-image-in-the-exe-file
+if getattr(sys, 'frozen', False):       # Check if running as compiled
+    image_dir = sys._MEIPASS + "/img/"  # In production (compiled with PyInstaller)
+else:
+    image_dir = "./img/"                # Path name when run with Python interpreter
+
+# Create image paths
+icon_image = image_dir + "icon.ico"
+empty_image = image_dir + "empty.png"
+multiple_image = image_dir + "multiple.png"
+arrow_image = image_dir + "arrow.png"
 
 qr_paths = []
 sign_path = ""
@@ -27,7 +37,7 @@ windowLayout = [ [pgui.Text("Balinteus' Munzee Signature Generator", size=[46, 1
                              [pgui.Button("Specify export location", size=[38, 1], key="-set_export_location-")],
                              [pgui.Button("Generate", size=[38, 1], disabled=True, key="-generate-")] ])] ]
 
-mainWindow = pgui.Window("Munzee Signature Generator", windowLayout, icon="img/icon.ico")
+mainWindow = pgui.Window("Munzee Signature Generator", windowLayout, icon=icon_image)
 
 def readyCheck():
     print("Ready check!")   # DEBUG
@@ -87,17 +97,17 @@ while True:
     if event == pgui.WIN_CLOSED or event == 'Cancel':
         break
     elif event == "-import_qr-":
-        qr_files = pgui.popup_get_file("Choose your QR code(s) you want to sign!", multiple_files=True, icon="img/icon.ico")
+        qr_files = pgui.popup_get_file("Choose your QR code(s) you want to sign!", multiple_files=True, icon=icon_image)
         print(qr_files)    # DEBUG
         # Example files string: "C:/Users/balin/Desktop/gen.png;C:/Users/balin/Desktop/index.png"
         if (qr_files != None) and (qr_files != ""):
             qr_paths = qr_files.split(";")
         print(qr_paths) # DEBUG
     elif event == "-import_sign-":
-        sign_path = pgui.popup_get_file("Choose your signature image!", icon="img/icon.ico")
+        sign_path = pgui.popup_get_file("Choose your signature image!", icon=icon_image)
         print(sign_path)    # DEBUG
     elif event == "-set_export_location-":
-        export_location = pgui.popup_get_folder("Choose your output folder!", icon="img/icon.ico")
+        export_location = pgui.popup_get_folder("Choose your output folder!", icon=icon_image)
         print(export_location)  # DEBUG
     elif event == "-generate-":
         generated_images = []
