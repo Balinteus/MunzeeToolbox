@@ -3,7 +3,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFilter
 import PySimpleGUI as pgui
 
-pgui.theme("DarkAmber")
+pgui.theme("DarkBrown4")
 
 # Preparing the asset directory
 # https://stackoverflow.com/questions/31836104/pyinstaller-and-onefile-how-to-include-an-image-in-the-exe-file
@@ -120,5 +120,5 @@ while True:
     updateThumbnails()
     print(event[0])
 
-window.close()
+mainWindow.close()
 
