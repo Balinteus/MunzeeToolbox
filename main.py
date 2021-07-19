@@ -66,6 +66,12 @@ def generateSignature(qr_path, sign_path):
 
     return generated_img
 
+def generateThumbnail(base_image):
+    base_image.thumbnail((300, 300))
+    generated_thumbnail = io.BytesIO()
+    base_image.save(generated_thumbnail, format="PNG")
+    return generated_thumbnail
+
 def updateThumbnails():
     print("Updating thumbnails...")
     if len(qr_paths) > 1:
@@ -74,17 +80,12 @@ def updateThumbnails():
             mainWindow.Element("-rendered_img-").Update(filename=multiple_image, size=(300, 300))
     elif len(qr_paths) == 1:
         # Update QR thumbnail
-        qr_image = Image.open(qr_paths[0])
-        qr_image.thumbnail((300, 300))
-        qr_thumbnail = io.BytesIO()
-        qr_image.save(qr_thumbnail, format="PNG")
+        qr_thumbnail = generateThumbnail(Image.open(qr_paths[0]))
         mainWindow.Element("-qr_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
         # Update Rendered thumbnail
         if (sign_path != "") and (sign_path != None):
             rendered_image = generateSignature(qr_paths[0], sign_path).resize((300, 300), Image.BILINEAR)
-            rendered_image.thumbnail((300, 300))
-            rendered_thumbnail = io.BytesIO()
-            rendered_image.save(rendered_thumbnail, format="PNG")
+            rendered_thumbnail = generateThumbnail(rendered_image)
             mainWindow.Element("-rendered_img-").Update(filename=None, data=rendered_thumbnail.getvalue(), size=(300, 300))
         else:
             mainWindow.Element("-rendered_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
