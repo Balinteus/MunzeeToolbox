@@ -45,7 +45,7 @@ def readyCheck():
         mainWindow.Element("-generate-").Update(disabled=False)
         print("READY!")    # DEBUG
 
-def generateSignature(qr_path, sign_path):
+def generateSignature(qr_path, sign_path, isThumbnail = False):
     # Load the base images
     qr_img = Image.open(qr_path)
     sign_img = Image.open(sign_path)
@@ -62,7 +62,8 @@ def generateSignature(qr_path, sign_path):
     # Generate the signatured image
     generated_img = qr_img.copy()
     generated_img.paste(sign_img, center_offset)
-    generated_img = generated_img.resize((output_size, output_size), Image.BILINEAR)
+    if not isThumbnail:
+        generated_img = generated_img.resize((output_size, output_size), Image.BILINEAR)
 
     return generated_img
 
@@ -84,7 +85,7 @@ def updateThumbnails():
         mainWindow.Element("-qr_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
         # Update Rendered thumbnail
         if (sign_path != "") and (sign_path != None):
-            rendered_image = generateSignature(qr_paths[0], sign_path).resize((300, 300), Image.BILINEAR)
+            rendered_image = generateSignature(qr_paths[0], sign_path, True)
             rendered_thumbnail = generateThumbnail(rendered_image)
             mainWindow.Element("-rendered_img-").Update(filename=None, data=rendered_thumbnail.getvalue(), size=(300, 300))
         else:
