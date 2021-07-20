@@ -7,10 +7,10 @@ pgui.theme("DarkBrown4")
 
 # Preparing the asset directory
 # https://stackoverflow.com/questions/31836104/pyinstaller-and-onefile-how-to-include-an-image-in-the-exe-file
-if getattr(sys, 'frozen', False):       # Check if running as compiled
+if getattr(sys, "frozen", False):  # Check if running as compiled
     image_dir = sys._MEIPASS + "/img/"  # In production (compiled with PyInstaller)
 else:
-    image_dir = "./img/"                # Path name when run with Python interpreter
+    image_dir = "./img/"  # Path name when run with Python interpreter
 
 # Create image paths
 icon_image = image_dir + "icon.ico"
@@ -28,24 +28,36 @@ qr_size = 500
 sign_size = 100
 output_size = 85
 
-windowLayout = [ [pgui.Text("Balinteus' Munzee Signature Generator", size=[46, 1], font="Helvitica 20 bold", justification="center", relief=pgui.RELIEF_RIDGE)],
-                [pgui.Column([ [pgui.Frame("Imported QR Code", [[pgui.Image(empty_image, key="-qr_img-", size=(300, 300))]])],
-                             [pgui.Button("Import QR Code(s)", size=[38, 1], key="-import_qr-")],
-                             [pgui.Button("Import Signature Image", size=[38, 1], key="-import_sign-")] ]),
-                pgui.Column([ [pgui.Image(arrow_image, size=(100, 100))] ]),
-                pgui.Column([ [pgui.Frame("Generated QR Code", [[pgui.Image(empty_image, key="-rendered_img-", size=(300, 300))]])],
-                             [pgui.Button("Specify export location", size=[38, 1], key="-set_export_location-")],
-                             [pgui.Button("Generate", size=[38, 1], disabled=True, key="-generate-")] ])] ]
+# fmt: off
+windowLayout = [ 
+    [pgui.Text("Balinteus' Munzee Signature Generator", size=[46, 1], font="Helvitica 20 bold", justification="center", relief=pgui.RELIEF_RIDGE)],
+    [pgui.Column([ [pgui.Frame("Imported QR Code", [[pgui.Image(empty_image, key="-qr_img-", size=(300, 300))]])],
+                 [pgui.Button("Import QR Code(s)", size=[38, 1], key="-import_qr-")],
+                 [pgui.Button("Import Signature Image", size=[38, 1], key="-import_sign-")] ]),
+    pgui.Column([ [pgui.Image(arrow_image, size=(100, 100))] ]),
+    pgui.Column([ [pgui.Frame("Generated QR Code", [[pgui.Image(empty_image, key="-rendered_img-", size=(300, 300))]])],
+                 [pgui.Button("Specify export location", size=[38, 1], key="-set_export_location-")],
+                 [pgui.Button("Generate", size=[38, 1], disabled=True, key="-generate-")] ])]
+]
+# fmt: on
 
 mainWindow = pgui.Window("Munzee Signature Generator", windowLayout, icon=icon_image)
 
-def readyCheck():
-    print("Ready check!")   # DEBUG
-    if (len(qr_paths) > 0) and (sign_path != "") and (export_location != "") and (sign_path != None) and (export_location != None):
-        mainWindow.Element("-generate-").Update(disabled=False)
-        print("READY!")    # DEBUG
 
-def generateSignature(qr_path, sign_path, isThumbnail = False):
+def readyCheck():
+    print("Ready check!")
+    if (
+        (len(qr_paths) > 0)
+        and (sign_path != "")
+        and (sign_path != None)
+        and (export_location != "")
+        and (export_location != None)
+    ):
+        mainWindow.Element("-generate-").Update(disabled=False)
+        print("READY!")
+
+
+def generateSignature(qr_path, sign_path, isThumbnail=False):
     # Load the base images
     qr_img = Image.open(qr_path)
     sign_img = Image.open(sign_path)
@@ -67,60 +79,82 @@ def generateSignature(qr_path, sign_path, isThumbnail = False):
 
     return generated_img
 
+
 def generateThumbnail(base_image):
     base_image.thumbnail((300, 300))
     generated_thumbnail = io.BytesIO()
     base_image.save(generated_thumbnail, format="PNG")
     return generated_thumbnail
 
+
 def updateThumbnails():
     print("Updating thumbnails...")
     if len(qr_paths) > 1:
         mainWindow.Element("-qr_img-").Update(filename=multiple_image, size=(300, 300))
         if (sign_path != "") and (sign_path != None):
-            mainWindow.Element("-rendered_img-").Update(filename=multiple_image, size=(300, 300))
+            mainWindow.Element("-rendered_img-").Update(
+                filename=multiple_image, size=(300, 300)
+            )
     elif len(qr_paths) == 1:
         # Update QR thumbnail
         qr_thumbnail = generateThumbnail(Image.open(qr_paths[0]))
-        mainWindow.Element("-qr_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
+        mainWindow.Element("-qr_img-").Update(
+            filename=None, data=qr_thumbnail.getvalue(), size=(300, 300)
+        )
         # Update Rendered thumbnail
         if (sign_path != "") and (sign_path != None):
             rendered_image = generateSignature(qr_paths[0], sign_path, True)
             rendered_thumbnail = generateThumbnail(rendered_image)
-            mainWindow.Element("-rendered_img-").Update(filename=None, data=rendered_thumbnail.getvalue(), size=(300, 300))
+            mainWindow.Element("-rendered_img-").Update(
+                filename=None, data=rendered_thumbnail.getvalue(), size=(300, 300)
+            )
         else:
-            mainWindow.Element("-rendered_img-").Update(filename=None, data=qr_thumbnail.getvalue(), size=(300, 300))
+            mainWindow.Element("-rendered_img-").Update(
+                filename=None, data=qr_thumbnail.getvalue(), size=(300, 300)
+            )
     else:
         mainWindow.Element("-qr_img-").Update(filename=empty_image, size=(300, 300))
-        mainWindow.Element("-rendered_img-").Update(filename=empty_image, size=(300, 300))
+        mainWindow.Element("-rendered_img-").Update(
+            filename=empty_image, size=(300, 300)
+        )
+
 
 while True:
     event, values = mainWindow.read()
-    if event == pgui.WIN_CLOSED or event == 'Cancel':
+    if event == pgui.WIN_CLOSED or event == "Cancel":
         break
     elif event == "-import_qr-":
-        qr_files = pgui.popup_get_file("Choose your QR code(s) you want to sign!", multiple_files=True, icon=icon_image)
-        print(qr_files)    # DEBUG
+        qr_files = pgui.popup_get_file(
+            "Choose your QR code(s) you want to sign!",
+            multiple_files=True,
+            icon=icon_image,
+        )
+        print(qr_files)
         # Example files string: "C:/Users/balin/Desktop/gen.png;C:/Users/balin/Desktop/index.png"
         if (qr_files != None) and (qr_files != ""):
             qr_paths = qr_files.split(";")
-        print(qr_paths) # DEBUG
+        print(qr_paths)
     elif event == "-import_sign-":
         sign_path = pgui.popup_get_file("Choose your signature image!", icon=icon_image)
-        print(sign_path)    # DEBUG
+        print(sign_path)
     elif event == "-set_export_location-":
-        export_location = pgui.popup_get_folder("Choose your output folder!", icon=icon_image)
-        print(export_location)  # DEBUG
+        export_location = pgui.popup_get_folder(
+            "Choose your output folder!", icon=icon_image
+        )
+        print(export_location)
     elif event == "-generate-":
         generated_images = []
         for i in range(len(qr_paths)):
             generated_images.append(generateSignature(qr_paths[i], sign_path))
         for i in range(len(generated_images)):
-            generated_images[i].save(f"{export_location}{'' if export_location.endswith('/') else '/'}gen_{total_session_gens}_{i}.png")
-        total_session_gens += 1  # This prevents regenerating the previously generated images
+            generated_images[i].save(
+                f"{export_location}{'' if export_location.endswith('/') else '/'}gen_{total_session_gens}_{i}.png"
+            )
+        total_session_gens += (
+            1  # This prevents regenerating the previously generated images
+        )
     readyCheck()
     updateThumbnails()
     print(event[0])
 
 mainWindow.close()
-
