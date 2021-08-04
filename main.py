@@ -29,8 +29,14 @@ sign_size = 100
 output_size = 85
 
 # fmt: off
-windowLayout = [ 
-    [pgui.Text("Balinteus' Munzee Signature Generator", size=[46, 1], font="Helvitica 20 bold", justification="center", relief=pgui.RELIEF_RIDGE)],
+menubarLayout = [
+    ["&File", ["&Import...", ["&QR Code(s)", "&Signature Image"], "Specify &export location", "---", "!&Generate", "!&Print", "&Clear inputs", "---", "E&xit"]],
+    ["&Toolbox", ["&HTML sheet splitter", "&Print sheet generator"]],
+    ["Se&ttings"],
+    ["&About", ["!Made by: Balinteus", "---",  "My website", "The project's github page"]]
+]
+
+generatorLayout = [
     [pgui.Column([ [pgui.Frame("Imported QR Code", [[pgui.Image(empty_image, key="-qr_img-", size=(300, 300))]])],
                  [pgui.Button("Import QR Code(s)", size=[38, 1], key="-import_qr-")],
                  [pgui.Button("Import Signature Image", size=[38, 1], key="-import_sign-")] ]),
@@ -39,9 +45,43 @@ windowLayout = [
                  [pgui.Button("Specify export location", size=[38, 1], key="-set_export_location-")],
                  [pgui.Button("Generate", size=[38, 1], disabled=True, key="-generate-")] ])]
 ]
+
+printsheetLayout = [
+    [pgui.Column([ [pgui.Frame("Options", [
+                      [pgui.Button("Import QR Code(s)", size=[38, 1], key="-ps_imp-")],
+                      [pgui.HorizontalSeparator(pad=(10, 10))],
+                      [pgui.Text("Paper size: "), pgui.DropDown(["A4"], default_value="A4", readonly=True)],
+                      [pgui.Text("Margin size: "), pgui.Spin([i for i in range(1, 1500)], initial_value=10), pgui.Text("px")],
+                      [pgui.HorizontalSeparator(pad=(10, 10))],
+                      [pgui.Button("Generate", size=[38, 1], key="-ps_gen-")],
+                      [pgui.Button("Save generated image", size=[38, 1], key="-ps_save-")], ])] ]),
+    pgui.Column([ [pgui.Image(arrow_image, size=(100, 100))] ]),
+    pgui.Column([ [pgui.Frame("Output", [[pgui.Image(empty_image, key="-rendered_img-", size=(248, 350))]])]])]
+]
+
+settingsLayout = [
+    [pgui.Text("Settings")],
+    [pgui.Text("Imported QR Code size: "), pgui.Input()],
+    [pgui.Text("Signature image size (on generated img): "), pgui.Input()],
+]
+
+tabLayout = [
+    [
+        pgui.Tab("Signature generator", generatorLayout),
+        pgui.Tab("HTML sheet splitter", generatorLayout),
+        pgui.Tab("Print sheet generator", printsheetLayout),
+        pgui.Tab("Settings", settingsLayout),
+    ]
+]
+
+mainLayout = [ 
+    [pgui.Menu(menubarLayout)],
+    [pgui.Text("Balinteus' Munzee Toolbox", size=[46, 1], font="Helvitica 20 bold", justification="center", relief=pgui.RELIEF_RIDGE)],
+    [pgui.TabGroup(tabLayout, tab_location="topleft")]
+]
 # fmt: on
 
-mainWindow = pgui.Window("Munzee Signature Generator", windowLayout, icon=icon_image)
+mainWindow = pgui.Window("Munzee Toolbox", mainLayout, icon=icon_image)
 
 
 def readyCheck():
@@ -121,9 +161,9 @@ def updateThumbnails():
 
 while True:
     event, values = mainWindow.read()
-    if event == pgui.WIN_CLOSED or event == "Cancel":
+    if event == pgui.WIN_CLOSED or event == "Exit":
         break
-    elif event == "-import_qr-":
+    elif event == "-import_qr-" or event == "QR Code(s)":
         qr_files = pgui.popup_get_file(
             "Choose your QR code(s) you want to sign!",
             multiple_files=True,
@@ -134,15 +174,15 @@ while True:
         if (qr_files != None) and (qr_files != ""):
             qr_paths = qr_files.split(";")
         print(qr_paths)
-    elif event == "-import_sign-":
+    elif event == "-import_sign-" or event == "Signature Image":
         sign_path = pgui.popup_get_file("Choose your signature image!", icon=icon_image)
         print(sign_path)
-    elif event == "-set_export_location-":
+    elif event == "-set_export_location-" or event == "Specify export location":
         export_location = pgui.popup_get_folder(
             "Choose your output folder!", icon=icon_image
         )
         print(export_location)
-    elif event == "-generate-":
+    elif event == "-generate-" or event == "Generate":
         generated_images = []
         for i in range(len(qr_paths)):
             generated_images.append(generateSignature(qr_paths[i], sign_path))
@@ -153,8 +193,12 @@ while True:
         total_session_gens += (
             1  # This prevents regenerating the previously generated images
         )
+    elif event == "Clear inputs":
+        qr_paths = []
+        sign_path = ""
+        export_location = ""
     readyCheck()
     updateThumbnails()
-    print(event[0])
+    print(event)
 
 mainWindow.close()
