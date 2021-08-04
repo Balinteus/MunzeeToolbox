@@ -6,7 +6,7 @@ image_folder = "img" + os.pathsep + "img"
 PyInstaller.__main__.run(
     [
         "main.py",
-        "--name", "QR-Signer",
+        "--name", "MunzeeToolbox",
         "--onefile",
         "--windowed",
         "--add-binary", image_folder,
