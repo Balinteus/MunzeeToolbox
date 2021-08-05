@@ -51,7 +51,7 @@ printsheetLayout = [
                       [pgui.Button("Import QR Code(s)", size=[38, 1], key="-ps_imp-")],
                       [pgui.HorizontalSeparator(pad=(10, 10))],
                       [pgui.Text("Paper size: "), pgui.DropDown(["A4"], default_value="A4", readonly=True)],
-                      [pgui.Text("Margin size: "), pgui.Spin([i for i in range(1, 1500)], initial_value=10), pgui.Text("px")],
+                      [pgui.Text("Margin size: "), pgui.Spin([i for i in range(1, 1500)], initial_value=10, key="-ps_margin-"), pgui.Text("px")],
                       [pgui.HorizontalSeparator(pad=(10, 10))],
                       [pgui.Button("Generate", size=[38, 1], key="-ps_gen-")],
                       [pgui.Button("Save generated image", size=[38, 1], key="-ps_save-")], ])] ]),
@@ -97,14 +97,18 @@ def readyCheck():
         print("READY!")
 
 
-def generateSignature(qr_path, sign_path, isThumbnail=False):
+def generateSignature(qr_path, sign_path, isThumbnail=False, isBinary=False):
     # Load the base images
-    qr_img = Image.open(qr_path)
-    sign_img = Image.open(sign_path)
+    if not isBinary:
+        qr_img = Image.open(qr_path)
+        sign_img = Image.open(sign_path)
+    else:
+        qr_img, sign_img = qr_path, sign_path
 
     # ...and resize them
-    qr_img = qr_img.resize((qr_size, qr_size), Image.BILINEAR)
-    sign_img = sign_img.resize((sign_size, sign_size), Image.BILINEAR)
+    if not isBinary:
+        qr_img = qr_img.resize((qr_size, qr_size), Image.BILINEAR)
+        sign_img = sign_img.resize((sign_size, sign_size), Image.BILINEAR)
 
     # Calculate the center offset
     qr_w, qr_h = qr_img.size
@@ -159,10 +163,32 @@ def updateThumbnails():
         )
 
 
+def parsePaths(raw_paths: str):
+    if (raw_paths != None) and (raw_paths != ""):
+        parsed_paths = raw_paths.split(";")
+    return parsed_paths
+
+
+def addMargin(base_image_path: str, margin_size: int):
+    base_image = Image.open(base_image_path)
+    background = Image.new(
+        "RGBA",
+        (base_image.width + margin_size * 2, base_image.height + margin_size * 2),
+        (255, 255, 255),
+    )
+    return generateSignature(background, base_image, True, True)
+
+
 while True:
     event, values = mainWindow.read()
     if event == pgui.WIN_CLOSED or event == "Exit":
         break
+    elif event == "Clear inputs":
+        qr_paths = []
+        sign_path = ""
+        export_location = ""
+
+    # Signature Generator commands
     elif event == "-import_qr-" or event == "QR Code(s)":
         qr_files = pgui.popup_get_file(
             "Choose your QR code(s) you want to sign!",
@@ -171,8 +197,7 @@ while True:
         )
         print(qr_files)
         # Example files string: "C:/Users/balin/Desktop/gen.png;C:/Users/balin/Desktop/index.png"
-        if (qr_files != None) and (qr_files != ""):
-            qr_paths = qr_files.split(";")
+        qr_paths = parsePaths(qr_files)
         print(qr_paths)
     elif event == "-import_sign-" or event == "Signature Image":
         sign_path = pgui.popup_get_file("Choose your signature image!", icon=icon_image)
@@ -193,10 +218,26 @@ while True:
         total_session_gens += (
             1  # This prevents regenerating the previously generated images
         )
-    elif event == "Clear inputs":
-        qr_paths = []
-        sign_path = ""
-        export_location = ""
+
+    # Print Sheet Generator commands
+    elif event == "-ps_imp-":
+        ps_files = pgui.popup_get_file(
+            "Choose your QR codes(s) you want to stitch together!",
+            multiple_files=True,
+            icon=icon_image,
+        )
+        print(ps_files)
+        ps_paths = parsePaths(ps_files)
+        print(ps_paths)
+    elif event == "-ps_gen-":
+        mainWindow.Element("-rendered_img-0").Update(
+            filename=None,
+            data=generateThumbnail(
+                addMargin(ps_paths[0], mainWindow.Element("-ps_margin-").Get())
+            ).getvalue(),
+            size=(300, 300),
+        )
+
     readyCheck()
     updateThumbnails()
     print(event)
