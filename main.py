@@ -46,8 +46,17 @@ generatorLayout = [
                  [pgui.Button("Generate", size=[38, 1], disabled=True, key="-generate-")] ])]
 ]
 
+htmlsplitterLayout = [
+    [pgui.Column([[pgui.Frame("HTML sheet splitter", [[pgui.Button("Import HTML sheet", size=[38, 1], key="-hs_import-")],
+                [pgui.HorizontalSeparator(pad=(10, 10))],
+                [pgui.Button("Save QR Code(s)", size=[38, 1], key="-hs_save-")],
+                [pgui.HorizontalSeparator(pad=(10, 10))],
+                [pgui.Button("Export QR Code(s) into Signature Generator", size=[38, 1], key="-hs_exp_sg-")],
+                [pgui.Button("Export QR Code(s) into Print Sheet Generator", size=[38, 1], key="-hs_exp_ps-")] ], pad=(225, 100)) ]]) ]
+]
+
 printsheetLayout = [
-    [pgui.Column([ [pgui.Frame("Options", [
+    [pgui.Column([ [pgui.Frame("Print sheet generator", [
                       [pgui.Button("Import QR Code(s)", size=[38, 1], key="-ps_imp-")],
                       [pgui.HorizontalSeparator(pad=(10, 10))],
                       [pgui.Text("Paper size: "), pgui.DropDown(["A4"], default_value="A4", readonly=True)],
@@ -68,7 +77,7 @@ settingsLayout = [
 tabLayout = [
     [
         pgui.Tab("Signature generator", generatorLayout),
-        pgui.Tab("HTML sheet splitter", generatorLayout),
+        pgui.Tab("HTML sheet splitter", htmlsplitterLayout),
         pgui.Tab("Print sheet generator", printsheetLayout),
         pgui.Tab("Settings", settingsLayout),
     ]
