@@ -22,11 +22,15 @@ qr_paths = []
 sign_path = ""
 export_location = ""
 total_session_gens = 0
+printsheet = None
 
 # Default Settings
 qr_size = 500
 sign_size = 100
 output_size = 85
+
+# Constants
+A4_SIZE = (2480, 3508)
 
 # fmt: off
 menubarLayout = [
@@ -59,13 +63,13 @@ printsheetLayout = [
     [pgui.Column([ [pgui.Frame("Print sheet generator", [
                       [pgui.Button("Import QR Code(s)", size=[38, 1], key="-ps_imp-")],
                       [pgui.HorizontalSeparator(pad=(10, 10))],
-                      [pgui.Text("Paper size: "), pgui.DropDown(["A4"], default_value="A4", readonly=True)],
+                      [pgui.Text("Paper size: "), pgui.DropDown(["A4"], default_value="A4", readonly=True, key="-ps_papertype-")],
                       [pgui.Text("Margin size: "), pgui.Spin([i for i in range(1, 1500)], initial_value=10, key="-ps_margin-"), pgui.Text("px")],
                       [pgui.HorizontalSeparator(pad=(10, 10))],
                       [pgui.Button("Generate", size=[38, 1], key="-ps_gen-")],
-                      [pgui.Button("Save generated image", size=[38, 1], key="-ps_save-")], ])] ]),
+                      [pgui.Button("Save generated image", size=[38, 1], key="-ps_save-")], ], pad=(20, 10))] ]),
     pgui.Column([ [pgui.Image(arrow_image, size=(100, 100))] ]),
-    pgui.Column([ [pgui.Frame("Output", [[pgui.Image(empty_image, key="-rendered_img-", size=(248, 350))]])]])]
+    pgui.Column([ [pgui.Frame("Output", [[pgui.Image(empty_image, key="-ps_img-", size=(248, 350))]])]])]
 ]
 
 settingsLayout = [
@@ -188,6 +192,35 @@ def addMargin(base_image_path: str, margin_size: int):
     return generateSignature(background, base_image, True, True)
 
 
+def generatePrintsheet(qr_codes: dict):
+    # Get generator settings
+    margin_size = mainWindow.Element("-ps_margin-").Get()
+    paper_size = mainWindow.Element("-ps_papertype-").Get()
+    if paper_size == "A4":
+        paper_size = A4_SIZE
+    else:
+        paper_size = A4_SIZE
+
+    # Marginze images
+    marginized_imgs = []
+    for i in range(len(qr_codes)):
+        marginized_imgs.append(addMargin(qr_codes[i], margin_size))
+
+    # Create background
+    paper = Image.new("RGBA", paper_size, (255, 255, 255))
+
+    # Place the images on the paper
+    place_counter = (0, 0)
+    for i in range(len(marginized_imgs)):
+        # Prevent horizontal overflow
+        if ((paper_size[0] - place_counter[0]) < marginized_imgs[i].width):
+            place_counter = (0, place_counter[1] + marginized_imgs[i].height)
+        paper.paste(marginized_imgs[i], place_counter)
+        place_counter = (place_counter[0] + marginized_imgs[i].width, place_counter[1])
+
+    return paper
+
+
 while True:
     event, values = mainWindow.read()
     if event == pgui.WIN_CLOSED or event == "Exit":
@@ -239,13 +272,17 @@ while True:
         ps_paths = parsePaths(ps_files)
         print(ps_paths)
     elif event == "-ps_gen-":
-        mainWindow.Element("-rendered_img-0").Update(
+        printsheet = generatePrintsheet(ps_paths)
+        mainWindow.Element("-ps_img-").Update(
             filename=None,
             data=generateThumbnail(
-                addMargin(ps_paths[0], mainWindow.Element("-ps_margin-").Get())
+                printsheet
             ).getvalue(),
-            size=(300, 300),
+            size=(248, 350),
         )
+    elif event == "-ps_save-":
+        ps_export_location = pgui.popup_get_folder("Choose your output folder!", icon=icon_image)
+        printsheet.save(f"{ps_export_location}{'' if ps_export_location.endswith('/') else '/'}printsheet.png")
 
     readyCheck()
     updateThumbnails()
