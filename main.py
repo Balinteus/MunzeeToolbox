@@ -202,7 +202,7 @@ def generatePrintsheet(qr_codes: dict):
     else:
         paper_size = A4_SIZE
 
-    # Marginze images
+    # Marginize images
     marginized_imgs = []
     for i in range(len(qr_codes)):
         marginized_imgs.append(addMargin(qr_codes[i], margin_size))
@@ -214,7 +214,7 @@ def generatePrintsheet(qr_codes: dict):
     place_counter = (0, 0)
     for i in range(len(marginized_imgs)):
         # Prevent horizontal overflow
-        if ((paper_size[0] - place_counter[0]) < marginized_imgs[i].width):
+        if (paper_size[0] - place_counter[0]) < marginized_imgs[i].width:
             place_counter = (0, place_counter[1] + marginized_imgs[i].height)
         paper.paste(marginized_imgs[i], place_counter)
         place_counter = (place_counter[0] + marginized_imgs[i].width, place_counter[1])
@@ -276,14 +276,16 @@ while True:
         printsheet = generatePrintsheet(ps_paths)
         mainWindow.Element("-ps_img-").Update(
             filename=None,
-            data=generateThumbnail(
-                printsheet
-            ).getvalue(),
+            data=generateThumbnail(printsheet).getvalue(),
             size=(248, 350),
         )
     elif event == "-ps_save-":
-        ps_export_location = pgui.popup_get_folder("Choose your output folder!", icon=icon_image)
-        printsheet.save(f"{ps_export_location}{'' if ps_export_location.endswith('/') else '/'}printsheet.png")
+        ps_export_location = pgui.popup_get_folder(
+            "Choose your output folder!", icon=icon_image
+        )
+        printsheet.save(
+            f"{ps_export_location}{'' if ps_export_location.endswith('/') else '/'}printsheet.png"
+        )
 
     readyCheck()
     updateThumbnails()
