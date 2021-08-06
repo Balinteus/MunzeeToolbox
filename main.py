@@ -177,6 +177,7 @@ def updateThumbnails():
 
 
 def parsePaths(raw_paths: str):
+    parsed_paths = []
     if (raw_paths != None) and (raw_paths != ""):
         parsed_paths = raw_paths.split(";")
     return parsed_paths
