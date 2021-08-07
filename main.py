@@ -216,6 +216,11 @@ def generatePrintsheet(qr_codes: dict):
         # Prevent horizontal overflow
         if (paper_size[0] - place_counter[0]) < marginized_imgs[i].width:
             place_counter = (0, place_counter[1] + marginized_imgs[i].height)
+        # Prevent vertical overflow
+        if (paper_size[1] - place_counter[1]) < marginized_imgs[i].height:
+            imgs_left = len(marginized_imgs) - i
+            pgui.popup_error(f"Too many inputs! Couldn't fit the last {imgs_left} image{'' if imgs_left <= 1 else 's'}!")
+            break
         paper.paste(marginized_imgs[i], place_counter)
         place_counter = (place_counter[0] + marginized_imgs[i].width, place_counter[1])
 
