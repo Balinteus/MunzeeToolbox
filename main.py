@@ -19,6 +19,7 @@ multiple_image = image_dir + "multiple.png"
 arrow_image = image_dir + "arrow.png"
 
 qr_paths = []
+ps_paths = []
 sign_path = ""
 export_location = ""
 total_session_gens = 0
@@ -53,10 +54,10 @@ generatorLayout = [
 htmlsplitterLayout = [
     [pgui.Column([[pgui.Frame("HTML sheet splitter", [[pgui.Button("Import HTML sheet", size=[38, 1], key="-hs_import-")],
                 [pgui.HorizontalSeparator(pad=(10, 10))],
-                [pgui.Button("Save QR Code(s)", size=[38, 1], key="-hs_save-")],
+                [pgui.Button("Save QR Code(s)", size=[38, 1], key="-hs_save-", disabled=True)],
                 [pgui.HorizontalSeparator(pad=(10, 10))],
-                [pgui.Button("Export QR Code(s) into Signature Generator", size=[38, 1], key="-hs_exp_sg-")],
-                [pgui.Button("Export QR Code(s) into Print Sheet Generator", size=[38, 1], key="-hs_exp_ps-")] ], pad=(225, 100)) ]]) ]
+                [pgui.Button("Export QR Code(s) into Signature Generator", size=[38, 1], key="-hs_exp_sg-", disabled=True)],
+                [pgui.Button("Export QR Code(s) into Print Sheet Generator", size=[38, 1], key="-hs_exp_ps-", disabled=True)] ], pad=(225, 100)) ]]) ]
 ]
 
 printsheetLayout = [
@@ -66,8 +67,8 @@ printsheetLayout = [
                       [pgui.Text("Paper size: "), pgui.DropDown(["A4"], default_value="A4", readonly=True, key="-ps_papertype-")],
                       [pgui.Text("Margin size: "), pgui.Spin([i for i in range(1, 1500)], initial_value=10, key="-ps_margin-"), pgui.Text("px")],
                       [pgui.HorizontalSeparator(pad=(10, 10))],
-                      [pgui.Button("Generate", size=[38, 1], key="-ps_gen-")],
-                      [pgui.Button("Save generated image", size=[38, 1], key="-ps_save-")], ], pad=(20, 10))] ]),
+                      [pgui.Button("Generate", size=[38, 1], key="-ps_gen-", disabled=True)],
+                      [pgui.Button("Save generated image", size=[38, 1], key="-ps_save-", disabled=True)], ], pad=(20, 10))] ]),
     pgui.Column([ [pgui.Image(arrow_image, size=(100, 100))] ]),
     pgui.Column([ [pgui.Frame("Output", [[pgui.Image(empty_image, key="-ps_img-", size=(248, 350))]])]])]
 ]
@@ -108,6 +109,14 @@ def readyCheck():
     ):
         mainWindow.Element("-generate-").Update(disabled=False)
         print("READY!")
+    else:
+        mainWindow.Element("-generate-").Update(disabled=True)
+    if len(ps_paths) > 0:
+        mainWindow.Element("-ps_gen-").Update(disabled=False)
+        mainWindow.Element("-ps_save-").Update(disabled=False)
+    else:
+        mainWindow.Element("-ps_gen-").Update(disabled=True)
+        mainWindow.Element("-ps_save-").Update(disabled=True)
 
 
 def generateSignature(qr_path, sign_path, isThumbnail=False, isBinary=False):
@@ -153,6 +162,7 @@ def generateThumbnail(base_image, size=(300, 300)):
 
 def updateThumbnails():
     print("Updating thumbnails...")
+    # Update SG thumbnails
     if len(qr_paths) > 1:
         mainWindow.Element("-qr_img-").Update(filename=multiple_image, size=(300, 300))
         if (sign_path != "") and (sign_path != None):
@@ -181,6 +191,9 @@ def updateThumbnails():
         mainWindow.Element("-rendered_img-").Update(
             filename=empty_image, size=(300, 300)
         )
+    # Update PS thumbnails
+    if printsheet == None:
+        mainWindow.Element("-ps_img-").Update(filename=empty_image, size=(248, 350))
 
 
 def parsePaths(raw_paths: str):
@@ -239,9 +252,13 @@ while True:
     if event == pgui.WIN_CLOSED or event == "Exit":
         break
     elif event == "Clear inputs":
+        # Clear SG inputs
         qr_paths = []
         sign_path = ""
         export_location = ""
+        # Clear PS inputs
+        ps_paths = []
+        printsheet = None
 
     # Signature Generator commands
     elif event == "-import_qr-" or event == "QR Code(s)":
