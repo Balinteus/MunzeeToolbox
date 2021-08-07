@@ -137,10 +137,17 @@ def generateSignature(qr_path, sign_path, isThumbnail=False, isBinary=False):
     return generated_img
 
 
-def generateThumbnail(base_image):
-    base_image.thumbnail((300, 300))
+def generateThumbnail(base_image, size=(300, 300)):
+    # Create a copy of the base image, this way we don't overwrite it
+    work_image = base_image.copy()
+
+    # Create thumbnail
+    work_image.thumbnail(size)
+
+    # Write the img into BytesIO, so we can pass the raw data into the img element
     generated_thumbnail = io.BytesIO()
-    base_image.save(generated_thumbnail, format="PNG")
+    work_image.save(generated_thumbnail, format="PNG")
+
     return generated_thumbnail
 
 
@@ -281,7 +288,7 @@ while True:
         printsheet = generatePrintsheet(ps_paths)
         mainWindow.Element("-ps_img-").Update(
             filename=None,
-            data=generateThumbnail(printsheet).getvalue(),
+            data=generateThumbnail(printsheet, (248, 350)).getvalue(),
             size=(248, 350),
         )
     elif event == "-ps_save-":
