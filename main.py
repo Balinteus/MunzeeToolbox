@@ -1,4 +1,6 @@
 import io
+import html.parser
+import base64
 import sys
 from PIL import Image, ImageDraw, ImageFilter
 import PySimpleGUI as pgui
@@ -20,6 +22,8 @@ arrow_image = image_dir + "arrow.png"
 
 qr_paths = []
 ps_paths = []
+html_splits = []
+html_path = ""
 sign_path = ""
 export_location = ""
 total_session_gens = 0
@@ -117,6 +121,15 @@ def readyCheck():
     else:
         mainWindow.Element("-ps_gen-").Update(disabled=True)
         mainWindow.Element("-ps_save-").Update(disabled=True)
+    # HS Ready check
+    if len(html_splits) > 0:
+        mainWindow.Element("-hs_save-").Update(disabled=False)
+        mainWindow.Element("-hs_exp_sg-").Update(disabled=False)
+        mainWindow.Element("-hs_exp_ps-").Update(disabled=False)
+    else:
+        mainWindow.Element("-hs_save-").Update(disabled=True)
+        mainWindow.Element("-hs_exp_sg-").Update(disabled=True)
+        mainWindow.Element("-hs_exp_ps-").Update(disabled=True)
 
 
 def generateSignature(qr_path, sign_path, isThumbnail=False, isBinary=False):
@@ -249,6 +262,49 @@ def generatePrintsheet(qr_codes: dict):
     return paper
 
 
+class HTMLReader(html.parser.HTMLParser):
+    def __init__(self, collector):
+        html.parser.HTMLParser.__init__(self)
+        self.collector = collector
+
+    def handle_starttag(self, tag, attrs):
+        # Only collects the img tags & removes the data prefixes
+        if tag == "img":
+            self.collector.append(attrs[1][1].split("data:image/png;base64,")[1])
+
+    def handle_endtag(self, tag):
+        pass
+
+    def handle_data(self, data):
+        pass
+
+    def handle_comment(self, data):
+        pass
+
+    def handle_entityref(self, name):
+        pass
+
+    def handle_charref(self, name):
+        pass
+
+    def handle_decl(self, data):
+        pass
+
+
+def htmlSplitter(html_path: str):
+    encoded_imgs = []
+    html_file = open(html_path, "r").read()
+    parser = HTMLReader(encoded_imgs)
+    parser.feed(html_file)
+
+    decoded_imgs = []
+    for i in range(len(encoded_imgs)):
+        temp_img = Image.open(io.BytesIO(base64.b64decode(encoded_imgs[i])))
+        decoded_imgs.append(temp_img)
+
+    return decoded_imgs
+
+
 while True:
     event, values = mainWindow.read()
     if event == pgui.WIN_CLOSED or event == "Exit":
@@ -261,6 +317,9 @@ while True:
         # Clear PS inputs
         ps_paths = []
         printsheet = None
+        # Clear HS inputs
+        html_path = ""
+        html_splits = []
 
     # Signature Generator commands
     elif event == "-import_qr-" or event == "QR Code(s)":
@@ -292,6 +351,29 @@ while True:
         total_session_gens += (
             1  # This prevents regenerating the previously generated images
         )
+
+    # HTML Sheet Splitter commands
+    elif event == "-hs_import-":
+        html_path = pgui.popup_get_file(
+            "Choose an HTML sheet to split!",
+            icon=icon_image,
+            file_types=(("HTML files", "*.html"),),
+        )
+        html_splits = htmlSplitter(html_path)
+    elif event == "-hs_save-":
+        export_folder = pgui.popup_get_folder(
+            "Choose your output folder!", icon=icon_image
+        )
+        for i in range(len(html_splits)):
+            html_splits[i].save(
+                f"{export_folder}{'' if export_folder.endswith('/') else '/'}export_{i}.png"
+            )
+    elif event == "-hs_exp_sg-":
+        # TODO: Implement the Signature Generator importer
+        pass
+    elif event == "-hs_exp_ps-":
+        # TODO: Implement the Print Sheet Generator importer
+        pass
 
     # Print Sheet Generator commands
     elif event == "-ps_imp-":
