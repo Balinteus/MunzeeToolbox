@@ -2,7 +2,7 @@
 import io
 import sys
 import base64
-import html.parser
+from html.parser import HTMLParser
 
 from PIL import Image
 import PySimpleGUI as pgui
@@ -106,6 +106,17 @@ main_layout = [
 main_window = pgui.Window("Munzee Toolbox", main_layout, icon=icon_image)
 
 
+def adjust_button_state(btn_keys: list, is_disabled: bool):
+    """Adjusts multiple buttons' disabled state.
+
+    Args:
+        btn_keys (list): Contains the button ids.
+        is_disabled (bool): The buttons' disability state.
+    """
+    for i in range(len(btn_keys)):
+        main_window.Element(btn_keys[i]).Update(disabled=is_disabled)
+
+
 def ready_check():
     """Checks if all the required inputs are fulfilled. Enables/disables buttons
     if these requirements are met."""
@@ -118,28 +129,22 @@ def ready_check():
         and (export_location != "")
         and (export_location != None)
     ):
-        main_window.Element("-generate-").Update(disabled=False)
+        adjust_button_state(["-generate-"], False)
         print("SG READY!")
     else:
-        main_window.Element("-generate-").Update(disabled=True)
+        adjust_button_state(["-generate-"], True)
     # PSG Ready check
     if len(ps_paths) > 0:
-        main_window.Element("-ps_gen-").Update(disabled=False)
-        main_window.Element("-ps_save-").Update(disabled=False)
+        adjust_button_state(["-ps_gen-", "-ps_save-"], False)
         print("PSG READY!")
     else:
-        main_window.Element("-ps_gen-").Update(disabled=True)
-        main_window.Element("-ps_save-").Update(disabled=True)
+        adjust_button_state(["-ps_gen-", "-ps_save-"], True)
     # HS Ready check
     if len(html_splits) > 0:
-        main_window.Element("-hs_save-").Update(disabled=False)
-        main_window.Element("-hs_exp_sg-").Update(disabled=False)
-        main_window.Element("-hs_exp_ps-").Update(disabled=False)
+        adjust_button_state(["-hs_save-", "-hs_exp_sg-", "-hs_exp_ps-"], False)
         print("HS READY!")
     else:
-        main_window.Element("-hs_save-").Update(disabled=True)
-        main_window.Element("-hs_exp_sg-").Update(disabled=True)
-        main_window.Element("-hs_exp_ps-").Update(disabled=True)
+        adjust_button_state(["-hs_save-", "-hs_exp_sg-", "-hs_exp_ps-"], True)
 
 
 def generate_signature(qr_path, sign_path, isThumbnail=False, isBinary=False):
@@ -328,7 +333,7 @@ def generate_printsheet(qr_codes: list):
     return paper
 
 
-class HTMLReader(html.parser.HTMLParser):
+class HTMLReader(HTMLParser):
     """A custom HTML parser, that collects all the Base64 image data from an
     HTML input.
 
@@ -338,7 +343,7 @@ class HTMLReader(html.parser.HTMLParser):
 
     def __init__(self, collector: list):
         """Inits HTMLReader."""
-        html.parser.HTMLParser.__init__(self)
+        HTMLParser.__init__(self)
         self.collector = collector
 
     def handle_starttag(self, tag, attrs):
@@ -395,6 +400,18 @@ def split_htmlsheet(html_path: str):
     return decoded_imgs
 
 
+def generate_export_path(export_location: str):
+    """Generates a valid export path from the given string.
+
+    Args:
+        export_location (str): The given path.
+
+    Returns:
+        String: The generated valid path.
+    """
+    return f"{export_location}{'' if export_location.endswith('/') else '/'}"
+
+
 while True:
     event, values = main_window.read()
     if event == pgui.WIN_CLOSED or event == "Exit":
@@ -428,6 +445,7 @@ while True:
         export_location = pgui.popup_get_folder(
             "Choose your output folder!", icon=icon_image
         )
+        export_location = generate_export_path(export_location)
         print(export_location)
     elif event == "-generate-" or event == "Generate":
         generated_images = []
@@ -435,7 +453,7 @@ while True:
             generated_images.append(generate_signature(qr_paths[i], sign_path))
         for i in range(len(generated_images)):
             generated_images[i].save(
-                f"{export_location}{'' if export_location.endswith('/') else '/'}gen_{total_session_gens}_{i}.png"
+                export_location + f"gen_{total_session_gens}_{i}.png"
             )
         total_session_gens += (
             1  # This prevents regenerating the previously generated images
@@ -453,10 +471,9 @@ while True:
         export_folder = pgui.popup_get_folder(
             "Choose your output folder!", icon=icon_image
         )
+        export_folder = generate_export_path(export_folder)
         for i in range(len(html_splits)):
-            html_splits[i].save(
-                f"{export_folder}{'' if export_folder.endswith('/') else '/'}export_{i}.png"
-            )
+            html_splits[i].save(export_folder + f"export_{i}.png")
     elif event == "-hs_exp_sg-":
         # TODO: Implement the Signature Generator importer
         pass
@@ -485,9 +502,8 @@ while True:
         ps_export_location = pgui.popup_get_folder(
             "Choose your output folder!", icon=icon_image
         )
-        printsheet.save(
-            f"{ps_export_location}{'' if ps_export_location.endswith('/') else '/'}printsheet.png"
-        )
+        ps_export_location = generate_export_path(ps_export_location)
+        printsheet.save(ps_export_location + "printsheet.png")
 
     ready_check()
     update_thumbnails()
